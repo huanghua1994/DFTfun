@@ -1,11 +1,19 @@
 function [spreads,contras,shapematrix,centers,Nelec,Nnuc,Nucchg,K,L,shells_spread,shells_contra,shellcenters,shell_ang]= initialization_HF (species,xyz,basis)
+% spreads 是 prim basis func 指数项的系数
+% contras 是 prim basis func 前面的系数 
+% shapematrix 是 prim basis func 在哪些 cartesian 坐标的非 0 分量
+% centers 是 prim basis func 的中心，即为其所属原子的中心
+% Nelec 和 Nnuc 是总的电子数与原子数
+% L 是每一个 prim basis func 所属的 shell 中 prim basis func 的数量， SP 层当作一个 S 层一个 P层
+% K 是总 prim basis func 数
+
 K=0;
 
 iz=1;
 maximumcontra=0;
 shell_ang=[];
 iw=1;
-for ix=1:length(species)% ѭ��ÿ��ԭ��
+for ix=1:length(species)% 循环每个原子
     name=species(ix);
     
      [spread_prim,contra_prim,shape_prim,L_prim] = feval(['basis_',basis],name);% use feval to call function STO2G or 321G indirectly
@@ -45,7 +53,7 @@ for ix=1:length(species)% ѭ��ÿ��ԭ��
      end
      Nucchg(ix)=Nucchg_atom;
      
-     for iy=1:length(shape_prim)%ѭ��ÿ���ǲ�
+     for iy=1:length(shape_prim)%循环每个壳层
          currentshellshape=shape_prim(iy);
           if currentshellshape==0
              spreads(iz,:)=spread_prim(iy,:);
@@ -60,7 +68,7 @@ for ix=1:length(species)% ѭ��ÿ��ԭ��
          
              iz=iz+1;
              K=K+1;
-         elseif currentshellshape==1
+         elseif currentshellshape==1  % p 层，3个 primitive func
              spreads(iz,:)=spread_prim(iy,:);
              spreads(iz+1,:)=spread_prim(iy,:);
              spreads(iz+2,:)=spread_prim(iy,:);

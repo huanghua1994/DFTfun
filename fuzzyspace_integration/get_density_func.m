@@ -1,9 +1,14 @@
-function psi = get_densitynck(x, y, z, coef, alpha, shapematrix, centers, K, L, P)
+    
+function den = get_density_func(x, y, z, coef, alpha, shapematrix, centers, K, L, P)
 % denisty to SUM(all orbital's density)
 % can not specify which orbital to integrate. 
-	psi=0;         
-	for mu=1:K  %遍历 basis function
-		for nu=1:K  %遍历 basis function
+
+	den = zeros(K);
+
+	for mu = 1 : K %遍历基函数
+		for nu = 1 : K %遍历基函数
+			psi=0;
+		
 			shapeA=shapematrix(mu,:);
 			shapeB=shapematrix(nu,:);
 			xlA=shapeA(1);
@@ -22,14 +27,16 @@ function psi = get_densitynck(x, y, z, coef, alpha, shapematrix, centers, K, L, 
 			zB = centers(nu,3);
 		    for p=1:L(mu) % 遍历两个一个STO对应的高斯函数
 				for q=1:L(nu) % 遍历两个一个STO对应的高斯函数             
-                    alpha1 = alpha(mu,p);
-                    alpha2 = alpha(nu,q);
+                    alpha1 = alpha(mu, p);
+                    alpha2 = alpha(nu, q);
 
 					Psi1=(coef(mu,p).*(x-xA).^xlA.*(y-yA).^ymA.*(z-zA).^znA).*(exp(-alpha1*(x-xA).^2).*exp(-alpha1*(y-yA).^2).*exp(-alpha1*(z-zA).^2));
 					Psi2=(coef(nu,q).*(x-xB).^xlB.*(y-yB).^ymB.*(z-zB).^znB).*(exp(-alpha2*(x-xB).^2).*exp(-alpha2*(y-yB).^2).*exp(-alpha2*(z-zB).^2));   
-					psi=psi+Psi1.*Psi2* P(mu,nu);
+					psi=psi+Psi1.*Psi2
 				end
 			end
+			
+			den(mu, nu) = psi;
         end
     end
 end

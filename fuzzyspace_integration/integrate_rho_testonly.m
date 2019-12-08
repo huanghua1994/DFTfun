@@ -11,7 +11,7 @@
 [r0,w1] = cheby2(75,[-1,1]);
 
  r1= 5* (1+r0)./(1-r0);% 
-w1= w1'.*5*2./(r0-1).^2; % ri×ª»»µÄµ¼Êı
+w1= w1'.*5*2./(r0-1).^2; % riè½¬æ¢çš„å¯¼æ•°
 
  r1=r1(1:end-1);
  w1=w1(1:end-1);
@@ -36,7 +36,7 @@ surface_points=getLebedevSphere(302);
     
  spaceweight=cell(ncenters,ncenters);
 totalresult=0;
- for iatom=1:iatom% Ğè±é Íø¸ñ ÖĞĞÄÔ­×Ó
+ for iatom=1:iatom% éœ€é ç½‘æ ¼ ä¸­å¿ƒåŸå­
    
         for abc=1:3%xyz
        points(:,abc)=points0(:,abc)+xyz(iatom,abc);
@@ -46,7 +46,7 @@ totalresult=0;
     rnowz= points(:,3);
     
       
-       for jatom=1:ncenters % j is the atom where the test atom j ±éÀúÃ¿¸öÔ­×Ó¶Ô ij
+       for jatom=1:ncenters % j is the atom where the test atom j éå†æ¯ä¸ªåŸå­å¯¹ ij
         
        ri=sqrt((rnowx-xyz(jatom,1)).^2+(rnowy-xyz(jatom,2)).^2+(rnowz-xyz(jatom,3)).^2);
          iz=1;
@@ -55,11 +55,11 @@ totalresult=0;
              if katom~=jatom
                 
        rj=sqrt((rnowx-xyz(katom,1)).^2+(rnowy-xyz(katom,2)).^2+(rnowz-xyz(katom,3)).^2);      
-       rmu=(ri-rj)/dist(jatom,katom);%ÅĞ¶Ï »ı·ÖµÄÄÇ¸öµãÔÚ ii ºÍjjÖĞ¼äÏßµÄÎ»ÖÃ       
+       rmu=(ri-rj)/dist(jatom,katom);%åˆ¤æ–­ ç§¯åˆ†çš„é‚£ä¸ªç‚¹åœ¨ ii å’Œjjä¸­é—´çº¿çš„ä½ç½®       
        partfun = @(r) 1.5*r-0.5*r.^3;% Compute weight by partition space
       tmp1= partfun(partfun(partfun(rmu)));
        
-      spaceweight{jatom,katom}=(0.5*(1-tmp1));%  ´¢´æ ÕÚ±Î¾ØÕóij
+      spaceweight{jatom,katom}=(0.5*(1-tmp1));%  å‚¨å­˜ é®è”½çŸ©é˜µij
       iz=iz+1;
             else
                   spaceweight{jatom,katom}=1;
@@ -81,7 +81,7 @@ end
       
         for iz=1:ncenters     
     tmp=   spaceweight{iw,iz};
-         pvec{iw}=pvec{iw}.*tmp;% ¶ÔÃ¿¸öµãÀ´Ëµ£¬ ÕÚ±Î¾ØÕóµÄ³Ë»ı=È¨ÖØ
+         pvec{iw}=pvec{iw}.*tmp;% å¯¹æ¯ä¸ªç‚¹æ¥è¯´ï¼Œ é®è”½çŸ©é˜µçš„ä¹˜ç§¯=æƒé‡
       end  
    
   end
@@ -93,8 +93,8 @@ end
    sum_pvec=(pvec{ix}+sum_pvec);% at condition of 2 atoms, this is 1 for all the points in the space.  at condition of 3 atom, this range from 0.6 to 1. 
    end
    
- % ½öÓĞ¿¿½ü Íø¸ñÖĞĞÄµã µÄ Íø¸ñ¸÷µã±»»ı·Ö£¬ ÆäËû¿¿½üÆäËûÖĞĞÄÔ­×ÓµÄÍø¸ñµã±»ºöÂÔµôÁË¡£ 
- % Òò´Ë£¬pvec£¨for all iw that is not equal to iatom£© µÄÎ¨Ò»ÓÃ´¦¾ÍÊÇ ¹éÒ»»¯ »ı·ÖÈ¨ÖØ¡£
+ % ä»…æœ‰é è¿‘ ç½‘æ ¼ä¸­å¿ƒç‚¹ çš„ ç½‘æ ¼å„ç‚¹è¢«ç§¯åˆ†ï¼Œ å…¶ä»–é è¿‘å…¶ä»–ä¸­å¿ƒåŸå­çš„ç½‘æ ¼ç‚¹è¢«å¿½ç•¥æ‰äº†ã€‚ 
+ % å› æ­¤ï¼Œpvecï¼ˆfor all iw that is not equal to iatomï¼‰ çš„å”¯ä¸€ç”¨å¤„å°±æ˜¯ å½’ä¸€åŒ– ç§¯åˆ†æƒé‡ã€‚
     
         for abc=1:3%xyz
        points(:,abc)=points0(:,abc)+xyz(iatom,abc);

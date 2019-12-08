@@ -1,124 +1,106 @@
 function [weightss,rhos] = integrate_Xalpha(xyz,d,spreads,shapematrix,centers,K,L,P)
+
 [ncenters,~]=size(xyz);
     
-    for iatom=1:ncenters
-        for jatom=1:ncenters
-            if iatom~=jatom
-    dist(iatom,jatom)=2.07;
-            end
-        end
-    end
-[r0,w1] = cheby2(75,[-1,1]);
-
- r1= 5* (1+r0)./(1-r0);% 
-w1= w1'.*5*2./(r0-1).^2; % ri×ª»»µÄµ¼Êý
-
- r1=r1(1:end-1);
- w1=w1(1:end-1);
- 
-surface_points=getLebedevSphere(302);
-
-   weights=[0];
- 
-   points0=[0,0,0];
-   originalpoints=[surface_points.x,surface_points.y,surface_points.z];
-        for ix=1:length(r1)
-       rnow=r1(ix);  
-        if rnow<10
-     
-     points0 =  [points0;originalpoints*rnow];
-     weights= [weights;w1(ix)*(surface_points.w)*rnow^2];
-  
-        end
-    end
-    points0=points0(2:end,:);
-    weights=weights(2:end);
-    
- spaceweight=cell(ncenters,ncenters);
-totalresult=0;
- for iatom=1:iatom% Ðè±é Íø¸ñ ÖÐÐÄÔ­×Ó
-   
-        for abc=1:3%xyz
-       points(:,abc)=points0(:,abc)+xyz(iatom,abc);
-        end
-     rnowx= points(:,1);
-     rnowy= points(:,2);
-    rnowz= points(:,3);
-    
-      
-       for jatom=1:ncenters % j is the atom where the test atom j ±éÀúÃ¿¸öÔ­×Ó¶Ô ij
-        
-       ri=sqrt((rnowx-xyz(jatom,1)).^2+(rnowy-xyz(jatom,2)).^2+(rnowz-xyz(jatom,3)).^2);
-         iz=1;
-           for katom=1:ncenters% ; and :!!!!
-               
-             if katom~=jatom
-                
-       rj=sqrt((rnowx-xyz(katom,1)).^2+(rnowy-xyz(katom,2)).^2+(rnowz-xyz(katom,3)).^2);      
-       rmu=(ri-rj)/dist(jatom,katom);%ÅÐ¶Ï »ý·ÖµÄÄÇ¸öµãÔÚ ii ºÍjjÖÐ¼äÏßµÄÎ»ÖÃ       
-       partfun = @(r) 1.5*r-0.5*r.^3;% Compute weight by partition space
-      tmp1= partfun(partfun(partfun(rmu)));
-       
-      spaceweight{jatom,katom}=(0.5*(1-tmp1));%  ´¢´æ ÕÚ±Î¾ØÕóij
-      iz=iz+1;
-            else
-                  spaceweight{jatom,katom}=1;
-           end
-         
-       end
-       end
- 
-       %
-   
-       %
-       
- 
-for ix=1:ncenters
-pvec{ix}=1;
+for iatom=1:ncenters
+	for jatom=1:ncenters
+		if iatom~=jatom
+			dist(iatom,jatom)=2.07;
+		end
+	end
 end
 
-  for iw=1:ncenters
+% å¾„å‘å…¨éƒ¨ä½¿ç”¨ 75 ä¸ªèŠ‚ç‚¹
+[r0,w1] = cheby2(75,[-1,1]); % r0 == x_i, Cheb èŠ‚ç‚¹, w1 æ˜¯æƒé‡
+
+% ä½œè€…åœ¨è¿™é‡Œå°† P å–ä¸ºäº† 5
+r1= 5* (1+r0)./(1-r0);   % R_i = P \frac{1 + x_i}{1 - x_i}
+w1= w1'.*5*2./(r0-1).^2; % dR = \frac{2P}{(1-x)^2} dx
+
+r1=r1(1:end-1);
+w1=w1(1:end-1);
+
+% çƒé¢å…¨éƒ¨ä½¿ç”¨ 302 ä¸ªèŠ‚ç‚¹
+surface_points=getLebedevSphere(302);
+
+weights=[0];
+points0=[0,0,0];
+originalpoints=[surface_points.x,surface_points.y,surface_points.z];
+% å°† Lebedev èŠ‚ç‚¹ä¸Ž R_i èŠ‚ç‚¹ç»„åˆï¼Œå¦‚æžœ R_i å¤§äºŽ 10 bohr åˆ™å¿½ç•¥ä¹‹
+for ix=1:length(r1)
+	rnow=r1(ix);  
+	if rnow<10 
+		points0=[points0;originalpoints*rnow];
+		weights=[weights;w1(ix)*(surface_points.w)*rnow^2];
+	end
+end
+points0=points0(2:end,:);
+weights=weights(2:end);
+    
+spaceweight=cell(ncenters,ncenters);
+totalresult=0;
+
+for iatom=1:ncenters %éåŽ†å„ä¸ªåŽŸå­
+    
+	% å°†ä¸­å¿ƒä»ŽåŽŸç‚¹ç§»åŠ¨åˆ°åŽŸå­ä¸­å¿ƒ
+	for abc=1:3%xyz
+		points(:,abc)=points0(:,abc)+xyz(iatom,abc);
+	end
+    rnowx=points(:,1);
+    rnowy=points(:,2);
+    rnowz=points(:,3);
+    
       
+    for jatom=1:ncenters %éåŽ†æ¯ä¸ªåŽŸå­å¯¹ jkï¼Œè®¡ç®—ç©ºé—´åˆ’åˆ†æƒé‡ W_i
+        ri=sqrt((rnowx-xyz(jatom,1)).^2+(rnowy-xyz(jatom,2)).^2+(rnowz-xyz(jatom,3)).^2);
+        iz=1;
+        for katom=1:ncenters
+            if katom~=jatom
+                rj=sqrt((rnowx-xyz(katom,1)).^2+(rnowy-xyz(katom,2)).^2+(rnowz-xyz(katom,3)).^2);      
+				rmu=(ri-rj)/dist(jatom,katom); %åˆ¤æ–­ç§¯åˆ†æ ¼ç‚¹æ˜¯å¦åœ¨ j k ä¸­é—´çº¿çš„ä½ç½® 
+				
+				% è¿­ä»£ä¸‰æ¬¡ï¼Œå¾—åˆ° s(v(i,j)) = 0.5 * (1 - p(p(p(v(i,j)))))
+				partfun = @(r) 1.5*r-0.5*r.^3;
+				tmp1=partfun(partfun(partfun(rmu)));
+				spaceweight{jatom,katom}=(0.5*(1-tmp1)); %å‚¨å­˜é®è”½çŸ©é˜µjk
+				iz=iz+1;
+            else
+                spaceweight{jatom,katom}=1;
+            end
+       end
+    end
+
+    for ix=1:ncenters
+        pvec{ix}=1;
+	end
+
+    for iw=1:ncenters  
         for iz=1:ncenters     
-    tmp=   spaceweight{iw,iz};
-         pvec{iw}=pvec{iw}.*tmp;% ¶ÔÃ¿¸öµãÀ´Ëµ£¬ ÕÚ±Î¾ØÕóµÄ³Ë»ý=È¨ÖØ
-      end  
+            tmp=spaceweight{iw,iz};
+            pvec{iw}=pvec{iw}.*tmp; %å¯¹æ¯ä¸ªç§¯åˆ†æ ¼ç‚¹ï¼Œé®è”½çŸ©é˜µçš„ä¹˜ç§¯=æƒé‡
+        end  
+    end
    
-  end
-   
-   oneatomresult=0;
-   
-  sum_pvec=0;
-   for ix=1:ncenters
-   sum_pvec=(pvec{ix}+sum_pvec);% at condition of 2 atoms, this is 1 for all the points in the space.  at condition of 3 atom, this range from 0.6 to 1. 
-   end
-   
- % ½öÓÐ¿¿½ü Íø¸ñÖÐÐÄµã µÄ Íø¸ñ¸÷µã±»»ý·Ö£¬ ÆäËû¿¿½üÆäËûÖÐÐÄÔ­×ÓµÄÍø¸ñµã±»ºöÂÔµôÁË¡£ 
- % Òò´Ë£¬pvec£¨for all iw that is not equal to iatom£© µÄÎ¨Ò»ÓÃ´¦¾ÍÊÇ ¹éÒ»»¯ »ý·ÖÈ¨ÖØ¡£
+    oneatomresult=0;
+	
+	% å¯¹ pvec æ±‚å’Œä»¥å½’ä¸€åŒ–
+    sum_pvec=0;
+    for ix=1:ncenters
+        sum_pvec=(pvec{ix}+sum_pvec);
+    end
+	weightss{iatom}=weights.*pvec{iatom}./sum_pvec;
     
-        for abc=1:3%xyz
-       points(:,abc)=points0(:,abc)+xyz(iatom,abc);
-        end
-       oneatomresult= oneatomresult+sum(weights.*pvec{iatom}./sum_pvec.*get_densitynck(points(:,1),points(:,2),points(:,3),d,spreads,shapematrix,centers,K,L,P));
-  
-       
- weightss{iatom}=weights.*pvec{iatom}./sum_pvec;
-rho0= get_densitynck(points(:,1),points(:,2),points(:,3),d,spreads,shapematrix,centers,K,L,P);
+	oneatomresult= oneatomresult+sum(weights.*pvec{iatom}./sum_pvec.*get_densitynck(points(:,1),points(:,2),points(:,3),d,spreads,shapematrix,centers,K,L,P));
+
+    rho0= get_densitynck(points(:,1),points(:,2),points(:,3),d,spreads,shapematrix,centers,K,L,P);
    
- for mu=1:K
-     for nu=1:K
-rhos{iatom,mu,nu}= (rho0.^(1/3)).*get_density(mu,nu,points(:,1),points(:,2),points(:,3),d,spreads,shapematrix,centers,K,L,P);
-   
-     end
- end 
- 
-    
-  totalresult=totalresult+ oneatomresult;
-   
-  
-        
- end
-  
- end
-%    
+	for mu=1:K
+		for nu=1:K
+			rhos{iatom,mu,nu}= (rho0.^(1/3)).*get_density(mu,nu,points(:,1),points(:,2),points(:,3),d,spreads,shapematrix,centers,K,L,P);
+		end
+	end 
+	totalresult=totalresult+ oneatomresult;
+end
+
+end % end function    
  

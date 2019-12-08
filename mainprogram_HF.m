@@ -16,7 +16,7 @@
 %     You should have received a copy of the GNU General Public License
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %*****************************************************************************
-% HF/DFT Ê¾Àı´úÂëdesu
+% HF/DFT ç¤ºä¾‹ä»£ç desu
 % 
 %*****************************************************************************
  %  
@@ -26,15 +26,14 @@
  
  
 deletelimit=0;
-  [species,xyz] = findgeomgjf('gaussian_testjob\co.gjf');%¡¡usig reorient in gaussian before using this code, this can accelerate the calculation a lot. 
+  [species,xyz] = findgeomgjf('gaussian_testjob\co.gjf');%ã€€usig reorient in gaussian before using this code, this can accelerate the calculation a lot. 
   xyz=xyz*1.889725989;
 [spreads,contras,shapematrix,centers,Nelec,Nnuc,Nucchg,K,L,shells_spread,shells_contra,shellcenters,shell_ang]= initialization_HF (species,xyz,'STO2G');% The code only support STO2G and 321G basis set
  d=contras;
+ 
+    internucEnergy=0;
  nucchg=Nucchg;
 save ('shellinputs','shells_spread','shells_contra','shellcenters','shell_ang')
-    internucEnergy=0;
-    
- 
   
      for ix =1:Nnuc
              for iy=(ix+1):(Nnuc)
@@ -48,19 +47,19 @@ save ('shellinputs','shells_spread','shells_contra','shellcenters','shell_ang')
 % Compute all single electron operations
 
   
-    % Ëã³öhatree-fock·½³Ì¸÷¸ö¾ØÕóµÄÖµ£¬´æÆğÀ´
-    S = zeros(K,K);%S¾ØÕó
-    T = zeros(K,K);%T¾ØÕó
-    V = zeros(K,K);%V¾ØÕó
+    % ç®—å‡ºhatree-fockæ–¹ç¨‹å„ä¸ªçŸ©é˜µçš„å€¼ï¼Œå­˜èµ·æ¥
+    S = zeros(K,K);%SçŸ©é˜µ
+    T = zeros(K,K);%TçŸ©é˜µ
+    V = zeros(K,K);%VçŸ©é˜µ
     two_elec2_diag=zeros(K,K);
-    flag2 = zeros(K,K); %Á¢flag
+    flag2 = zeros(K,K); %ç«‹flag
     
     %Calculate the parts of the Fock matrix hamiltonian:
        
-    for mu=1:K    % ¶ÔÃ¿¸ö¹ìµÀ
-        for nu = 1:K       % ÓëÁíÒ»¸ö¹ìµÀµÄÒ»¸ö×é³ÉµÄ¸ßË¹·½³ÌËã»ı·Ö
+    for mu=1:K    % å¯¹æ¯ä¸ªè½¨é“
+        for nu = 1:K       % ä¸å¦ä¸€ä¸ªè½¨é“çš„ä¸€ä¸ªç»„æˆçš„é«˜æ–¯æ–¹ç¨‹ç®—ç§¯åˆ†
             if flag2(mu,nu)==0
-               for p=1:L(mu)                % ¶ÔÃ¿¸ö¹ìµÀµÄ×é³É¸ßË¹·½³Ì
+               for p=1:L(mu)                % å¯¹æ¯ä¸ªè½¨é“çš„ç»„æˆé«˜æ–¯æ–¹ç¨‹
                     for q=1:L(nu)         
                     
                     RA = [centers(mu,1) centers(mu,2) centers(mu,3)];
@@ -82,7 +81,7 @@ save ('shellinputs','shells_spread','shells_contra','shellcenters','shell_ang')
                   
                    end
                end
-               % É¾³ıµô¹ıĞ¡µÄ»ı·Ö
+               % åˆ é™¤æ‰è¿‡å°çš„ç§¯åˆ†
                   if abs(T(mu,nu))<deletelimit
                         T(mu,nu)=0;
                   end
@@ -92,7 +91,7 @@ save ('shellinputs','shells_spread','shells_contra','shellcenters','shell_ang')
                   if abs(S(mu,nu))<deletelimit
                         S(mu,nu)=0;
                   end
-                %Ç¿ÖÆ¶Ô³ÆĞÔ£¡£¡£¡
+                %å¼ºåˆ¶å¯¹ç§°æ€§ï¼ï¼ï¼
                 S(nu,mu)=S(mu,nu);
                 T(nu,mu)=T(mu,nu);
                 V(nu,mu)=V(mu,nu);
@@ -154,11 +153,10 @@ Bz=B(3);
     %%
     % Two-electron matrix elements
     % Calculate eq 3.211 w/ primitive Gaussians 3.212:
-    %4D¾ØÕó´¢´æËÄÖĞĞÄ£¬Á½µç×Ó»ı·Ö
+    %4DçŸ©é˜µå‚¨å­˜å››ä¸­å¿ƒï¼Œä¸¤ç”µå­ç§¯åˆ†
     two_elec2 = zeros(K,K,K,K);
-     flag= zeros(K,K,K,K);% flag ÊÇ±ØĞëµÄ£¬ÅĞ¶ÏÊÇ·ñĞèÒª´ÓĞÂ¼ÆËãË«µç×Ó»ı·Ö
-     
-    %±éÀúÃ¿¸ö¹ìµÀµÄÃ¿¸ö¸ßË¹»ùº¯Êı¡£ ÒòÎªÊÇ»ı·Ö½á¹ûºÍ ËÄ¸ö ¸ßË¹»ùº¯Êı Ïà¹Ø£¬ĞèÒª±éÀúËÄ´Î
+     flag= zeros(K,K,K,K);% flag æ˜¯å¿…é¡»çš„ï¼Œåˆ¤æ–­æ˜¯å¦éœ€è¦ä»æ–°è®¡ç®—åŒç”µå­ç§¯åˆ†
+    %éå†æ¯ä¸ªè½¨é“çš„æ¯ä¸ªé«˜æ–¯åŸºå‡½æ•°ã€‚ å› ä¸ºæ˜¯ç§¯åˆ†ç»“æœå’Œ å››ä¸ª é«˜æ–¯åŸºå‡½æ•° ç›¸å…³ï¼Œéœ€è¦éå†å››æ¬¡
     tic
     for mu=1:K
         for nu=1:K
@@ -195,7 +193,7 @@ Bz=B(3);
        
     end
     
-% cost 724 S for benzene STO2G ½á¹ûÒ»ÖÂ
+% cost 724 S for benzene STO2G ç»“æœä¸€è‡´
 % cost 392 S for benzene, if using symmetrtize and reorient in Gview. 
 % cost 320 S for benzene, if using symmetrtize and reorient in Gview, run
 % at home PC
@@ -203,24 +201,24 @@ Bz=B(3);
 toc
 % load aa
    
- % ²åÈëÖÆÔìÕı½»ĞÔµÄ¶«Î÷
+ % æ’å…¥åˆ¶é€ æ­£äº¤æ€§çš„ä¸œè¥¿
     [orbs,Dorbs]=eig(S);
     [orbs,Dorbs] = sorteig(orbs,Dorbs);    
     X=zeros(size(orbs));
-    Y=X; %Ô¤±¸×öÃÜ¶È¾ØÕó³ö²Ê
+    Y=X; %é¢„å¤‡åšå¯†åº¦çŸ©é˜µå‡ºå½©
         for i=1:K
         X(:,i)=orbs(:,i)/(Dorbs(i,i)^0.5);
         Y(:,i)=orbs(:,i)/(Dorbs(i,i) );
         end
      
-    %ÒÔÏÂÊÇ ½âRoothaan ·½³Ì£¬°üº¬µü´úµÄ SCF
-    %½â F*C(i)=D(i)*S*C(i) , Roothaan equations
+    %ä»¥ä¸‹æ˜¯ è§£Roothaan æ–¹ç¨‹ï¼ŒåŒ…å«è¿­ä»£çš„ SCF
+    %è§£ F*C(i)=D(i)*S*C(i) , Roothaan equations
  
-    %D¶ÔÓ¦Ã¿Ìõ¹ìµÀµÄÀë×Ó»¯ÄÜ£¬cÊÇ¹ìµÀ
+    %Då¯¹åº”æ¯æ¡è½¨é“çš„ç¦»å­åŒ–èƒ½ï¼Œcæ˜¯è½¨é“
  
       
 
-    %FÊÇCµÄº¯Êı£¬¹ÊĞèÒªµü´ú
+    %Fæ˜¯Cçš„å‡½æ•°ï¼Œæ•…éœ€è¦è¿­ä»£
     clear Pold
    it=0;
    deltaE=1; 
@@ -228,16 +226,16 @@ toc
  while it<100
      it=it+1;
 %         step
-  if it==1
-        % ÃÜ¶È¾ØÕó³õ²Â
-        %·½·¨Ò»£¬ÓÃ²»º¬µç×Ó¼äÅÅ³âÁ¦µÄF¾ØÕóËã³öc
+    if it==1
+        % å¯†åº¦çŸ©é˜µåˆçŒœ
+        %æ–¹æ³•ä¸€ï¼Œç”¨ä¸å«ç”µå­é—´æ’æ–¥åŠ›çš„FçŸ©é˜µç®—å‡ºc
  
     Hprime=X'*H*X;
 %     
     [cprime,D] = eig(Hprime);
      [cprime,D] = sorteig(cprime,D);
       c=X*cprime;  
-        %·½·¨¶ş£¬Ëæ±ã²Â
+        %æ–¹æ³•äºŒï¼Œéšä¾¿çŒœ
 %            H=T+V; 
 %          P=density;
             P = zeros(K,K); 
@@ -245,22 +243,22 @@ toc
             P=P+2*(c(:,i)*c(:,i)');
        end
   
-        else 
+    else 
              P = zeros(K,K); 
        for i=1:Nelec/2
             P=P+2*(c(:,i)*c(:,i)');
        end
-         end
+    end
     
   
- % ÃÜ¶È·½³Ì»ìºÏ density matrix mixing!
+ % å¯†åº¦æ–¹ç¨‹æ··åˆ density matrix mixing!
           Pnew=P;
         if it >1
             mixratio=0.7;
-                P=Pold*mixratio+Pnew*(1-mixratio) ;%ÃÜ¶È»ìºÏ¿ÉÒÔ·ÀÖ¹³öÏÖ¸´ÊıµÄ¹ìµÀÄÜÁ¿¡££¡£¡£¡            
+                P=Pold*mixratio+Pnew*(1-mixratio) ;%å¯†åº¦æ··åˆå¯ä»¥é˜²æ­¢å‡ºç°å¤æ•°çš„è½¨é“èƒ½é‡ã€‚ï¼ï¼ï¼            
                 if it >10
                   mixratio=0.2;
-                P=Pold*mixratio+Pnew*(1-mixratio) ;%ÃÜ¶È»ìºÏ¿ÉÒÔ·ÀÖ¹³öÏÖ¸´ÊıµÄ¹ìµÀÄÜÁ¿¡££¡£¡£¡       
+                P=Pold*mixratio+Pnew*(1-mixratio) ;%å¯†åº¦æ··åˆå¯ä»¥é˜²æ­¢å‡ºç°å¤æ•°çš„è½¨é“èƒ½é‡ã€‚ï¼ï¼ï¼       
                 end
         end
         
@@ -291,7 +289,7 @@ toc
         
 F=G+H;          
           Fprime=X'*F*X;
-        % Ëã×ÜÄÜÁ¿
+        % ç®—æ€»èƒ½é‡
         [cprime,D] = eig(Fprime);
         [cprime,D] = sorteig(cprime,D);    
 %        D=real(D);
@@ -303,7 +301,7 @@ F=G+H;
         
         energy=0.5*sum(sum(P.*G))+sum(sum(P.*(H)));
         Enonuc=energy;
-        % Ô­×ÓºË¼ä³âÁ¦
+        % åŸå­æ ¸é—´æ–¥åŠ›
    
         energy = energy + internucEnergy ; %  
          
