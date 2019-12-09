@@ -207,6 +207,7 @@ H = T + V;
 [int_points, int_weights] = generate_integrate_weights_points(xyz);
    
 while it < 100
+    tic;
     it = it + 1;
     
     if (it == 1)
@@ -233,17 +234,9 @@ while it < 100
         P = Pold * mixratio + Pnew * (1 - mixratio);
     end
     
-    %[weightss,rhos] = integrate_EXC(xyz,d,spreads,shapematrix,centers,K,L,P);
-    %tmp=0;
-    %Xalpha=0.7;
-    %for ix=1:length(rhos)
-    %    tmp=tmp+sum(weightss{ix}.*rhos{ix}.^(1/3));
-    %    tmp=tmp-(9/8)*((3/pi)^(1/3))*Xalpha* sum(weightss{ix}.*rhos{ix}.^(1/3));
-    %end
-    %exc=tmp;
     %下面的 d 是 contras, prim basis func 前面的系数, spreads 是 prim basis func 指数项的系数
     %[weightss,rhos] = integrate_Xalpha(xyz,d,spreads,shapematrix,centers,K,L,P);
-    rhos = eval_Xalpha_at_int_points(int_points, xyz,d,spreads,shapematrix,centers,K,L,P);
+    rhos = eval_Xalpha_at_int_points(int_points, xyz, K, d, spreads, shapematrix, centers, L, P);
     Vsc = zeros(K,K);
     for ix = 1 : Nnuc
         for mu = 1 : K
@@ -254,11 +247,10 @@ while it < 100
        end
     end
     Vsc = (-9/8) * ((3/pi)^(1/3)) * 0.7 * Vsc; 
-    EnergyXC = sum(sum(P.*Vsc ));
+    EnergyXC = sum(sum(P.*Vsc));
 
     %  Calculate the G(mu,nu) part of the Fock matrix, (eq 3.154)
-    G = zeros(K,K);
-    
+    G = zeros(K, K);
     for mu = 1 : K
         for nu = 1 : K
             for lambda = 1 : K
@@ -290,7 +282,8 @@ while it < 100
     if (abs(deltaE) < 1e-11)
         break
     end
-    fprintf('Iter %2d, energy = %d, deltaE = %e\n', it, energy, deltaE);
+    ut = toc;
+    fprintf('Iter %2d, energy = %d, deltaE = %e, %.3f (s)\n', it, energy, deltaE, ut);
     
     energyold = energy;
     Pold = P;
