@@ -16,7 +16,7 @@
 %     You should have received a copy of the GNU General Public License
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %*****************************************************************************
-% HF/DFT 示例代码desu
+% DFT demo code
 % 
 %*****************************************************************************
 %  
@@ -26,9 +26,9 @@ Farray=Farraytmp.Fvunum;
 
 
 deletelimit=0;
-[species,xyz] = findgeomgjf('gaussian_testjob\water.gjf');%　usig reorient in gaussian before using this code, this can accelerate the calculation a lot. 
+[species,xyz] = findgeomgjf('gaussian_testjob\CH3MO.gjf');%　usig reorient in gaussian before using this code, this can accelerate the calculation a lot. 
 xyz=xyz*1.889725989;
-[spreads,d,shapematrix,centers,Nelec,Nnuc,nucchg,K,L]= initialization_HF (species,xyz,'STO2G');% The code only support STO2G and 321G basis set
+[spreads,d,shapematrix,centers,Nelec,Nnuc,nucchg,K,L]=initialization_HF(species,xyz,'STO2G');% The code only support STO2G and 321G basis set
 
 internucEnergy=0;
 for ix =1:Nnuc
@@ -195,11 +195,9 @@ for i = 1 : K
     Y(:, i) = orbs(:, i) / (Dorbs(i, i));
 end
 
-%以下是解 Roothaan 方程，包含迭代的 SCF
-%解 F*C(i)=D(i)*S*C(i) , Roothaan equations
-%D对应每条轨道的离子化能，c是轨道
-%F是C的函数，故需要迭代
-    
+%% 
+% SCF iteration
+
 clear Pold
 it = 0;
 deltaE = 1; 

@@ -10,21 +10,13 @@ function [int_points, int_weights] = generate_integrate_weights_points(atom_xyz)
     nCheby = 75;     % 径向使用 75 个节点
     nLebedev = 302;  % 球面使用 302 个 Lebedev 节点
     
-    % 下面八行是原作者的写法，不知为何距离矩阵是一个固定的值，
+    % 原作者的写法不知为何距离矩阵是一个固定的值，
     % 以及 Chebyshev 节点的生成用的公式和 Sobereva 文章的不一样
-    use_my = 0;
-    
-    if use_my ~= 1
-        dist = zeros(ncenters) + 2.07;
+    use_my = 1;
+    if (use_my == 0)
+        dist = ones(ncenters) + 2.07;
         dist = dist - eye(ncenters) * 2.07;
-        [r0, w0] = cheby2(nCheby, [-1, 1]);
-        r0 = r0(1 : end-1);  % r1(end) 是 inf，抛弃之
-        w0 = w0(1 : end-1);  
-        rad_r = P * (1 + r0) ./ (1 - r0);
-        dR    = w0' .* P * 2 ./ (r0 - 1).^2;
-        rad_w = dR .* rad_r.^2;
     else
-    
         dist = zeros(ncenters);
         for i = 1 : ncenters
             for j = 1 : ncenters
@@ -36,17 +28,15 @@ function [int_points, int_weights] = generate_integrate_weights_points(atom_xyz)
                 dist(j, i) = d;
             end
         end
-
-        % 生成 Chebyshev 节点以及新的权重值
-        cheb_x = zeros(nCheby, 1);
-        rad_w  = zeros(nCheby, 1);
-        rad_r  = zeros(nCheby, 1);
-        for i = 1 : nCheby
-            cheb_x(i) = cos(i * pi / (nCheby + 1));
-            rad_r(i)  = P * (1 + cheb_x(i)) / (1 - cheb_x(i));
-            rad_w(i)  = 2 * pi / (nCheby + 1) * (P^3) * (1 + cheb_x(i))^2.5 / (1 - cheb_x(i))^3.5 * 4 * pi;
-        end
     end
+    
+    % 生成 Chebyshev 节点以及新的权重值
+    [r0, w0] = cheby2(nCheby, [-1, 1]);
+    r0 = r0(1 : end-1);  % r1(end) 是 inf，抛弃之
+    w0 = w0(1 : end-1);  
+    rad_r = P * (1 + r0) ./ (1 - r0);
+    dR    = w0' .* P * 2 ./ (r0 - 1).^2;
+    rad_w = dR .* rad_r.^2;
 
     % 生成 Lebedev 节点
     Lebedev_points = getLebedevSphere(nLebedev);
