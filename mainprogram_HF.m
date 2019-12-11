@@ -4,7 +4,7 @@
 %  Copyright (C) 2014-2015 xiangrufan@GitHub <1034534198@qq.com>
 %  Released in MIT License 
 %  
-%  Revised: Hua Huang <huangh223@gatech.edu>, 10 Dec 2019
+%  Revised: Hua Huang <huangh223@gatech.edu>, 2019
 %  
 %******************************************************************
 
@@ -200,7 +200,7 @@ Hprime = X' * Hcore * X;
 [Cprime, diag] = sorteig(Cprime, diag);
 C = X * Cprime;
 C = C(:, 1 : nocc);
-D = 2 * C * C';
+D = C * C';
 
 % SCF iteration
 iter   = 0;
@@ -224,7 +224,7 @@ while (iter < 100)
     end
     
     % Constrct the complete Fock matrix
-    H = J - 0.5 * K;
+    H = 2 * J - K;
     F = Hcore + H;
     Fprime = X' * F * X;
     
@@ -233,7 +233,7 @@ while (iter < 100)
     [Cprime, diag] = sorteig(Cprime, diag);
     C = X * Cprime;
     C = C(:, 1 : nocc);
-    D = 2 * C * C';
+    D = C * C';
     
     % Density matrix mixing
     Dnew = D;
@@ -248,7 +248,7 @@ while (iter < 100)
     Dold = D;
     
     % Calculate new energy
-    energy = 0.5 * sum(sum(D .* H)) + sum(sum(D .* Hcore));
+    energy = sum(sum(D .* (F + Hcore)));
     energy = energy + internucEnergy;
     if (iter > 2)
         deltaE = energyold - energy;

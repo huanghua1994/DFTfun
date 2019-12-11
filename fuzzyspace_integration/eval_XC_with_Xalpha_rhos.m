@@ -8,7 +8,7 @@ function XC = eval_XC_with_Xalpha_rhos(natom, nbf, rhos, int_weights, D)
             rho0 = rho0 + D(i, j) * rhos{k, i, j};
         end
         end
-        rho0 = rho0.^(1/3);
+        rho0 = (2 .* rho0).^(1/3);
         
         for i = 1 : nbf
         for j = i : nbf
