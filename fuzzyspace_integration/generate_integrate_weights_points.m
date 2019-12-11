@@ -6,47 +6,22 @@ function [int_points, int_weights] = generate_integrate_weights_points(atom_xyz)
     [ncenters, ~] = size(atom_xyz);
     
     % 原作者设的参数值
-    P = 5;           % 原作者设的 P 值，不知为何是 5
-    nCheby = 75;     % 径向使用 75 个节点
-    nLebedev = 302;  % 球面使用 302 个 Lebedev 节点
-    
-    % 原作者的写法不知为何距离矩阵是一个固定的值，
-    % 以及 Chebyshev 节点的生成用的公式和 Sobereva 文章的不一样
-    use_my = 1;
-    if (use_my == 0)
-        dist = ones(ncenters) + 2.07;
-        dist = dist - eye(ncenters) * 2.07;
-    else
-        dist = zeros(ncenters);
-        for i = 1 : ncenters
-            for j = 1 : ncenters
-                dx = atom_xyz(i, 1) - atom_xyz(j, 1);
-                dy = atom_xyz(i, 2) - atom_xyz(j, 2);
-                dz = atom_xyz(i, 3) - atom_xyz(j, 3);
-                d  = sqrt(dx * dx + dy * dy + dz * dz);
-                dist(i, j) = d;
-                dist(j, i) = d;
-            end
-        end
-    end
-    
-    % 生成 Chebyshev 节点以及新的权重值
-    [r0, w0] = cheby2(nCheby, [-1, 1]);
-    r0 = r0(1 : end-1);  % r1(end) 是 inf，抛弃之
-    w0 = w0(1 : end-1);  
-    rad_r = P * (1 + r0) ./ (1 - r0);
-    dR    = w0' .* P * 2 ./ (r0 - 1).^2;
-    rad_w = dR .* rad_r.^2;
+    P        = 5;    % 原作者设的 P 值，不知为何是 5
+    nCheby   = 75;   % 径向使用 75 个节点
+    nLebedev = 302;  % 球面使用 302 个 Lebedev 节点    
 
     % 生成 Lebedev 节点
     Lebedev_points = getLebedevSphere(nLebedev);
-
+    
+    % 生成径向与球面积分节点
+    [rad_r, rad_w] = my_cheb2_becke(nCheby, P);
+    
     % 将径向节点与球面节点进行组合
-    radius_cut_num = sum(rad_r < 10);
-    int_weights0 = zeros(radius_cut_num * nLebedev, 1);
-    int_points   = zeros(radius_cut_num * nLebedev, 3);
+    rad_cut_num  = sum(rad_r < 10);
+    int_weights0 = zeros(rad_cut_num * nLebedev, 1);
+    int_points   = zeros(rad_cut_num * nLebedev, 3);
     orig_points  = [Lebedev_points.x, Lebedev_points.y, Lebedev_points.z];
-    for ir = 1 : radius_cut_num
+    for ir = 1 : rad_cut_num
         spos = ir * nLebedev - nLebedev + 1;
         epos = ir * nLebedev;
         int_weights0(spos : epos) = Lebedev_points.w * rad_w(ir);
@@ -54,9 +29,10 @@ function [int_points, int_weights] = generate_integrate_weights_points(atom_xyz)
     end
     
     % W_mat(i, j, k) 表示当前的第 i 个积分节点关于原子对 j, k 的模糊划分归属
-    W_mat = zeros(radius_cut_num * nLebedev, ncenters, ncenters);
-
-    for iatom = 1 : ncenters %遍历各个原子
+    W_mat = zeros(rad_cut_num * nLebedev, ncenters, ncenters);
+    
+    dist = squareform(pdist(atom_xyz));
+    for iatom = 1 : ncenters
         % 将积分格点中心从原点移动到原子中心
         rnowx = int_points(:, 1) + atom_xyz(iatom, 1); 
         rnowy = int_points(:, 2) + atom_xyz(iatom, 2); 
