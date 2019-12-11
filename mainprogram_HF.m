@@ -1,34 +1,22 @@
- 
-%*****************************************************************************
-%     <Hatree fock code project HF_fun>
-%     Copyright (C) <2014>  <X fan@ Clarkson Univ>
-% 
-%     This program is free software: you can redistribute it and/or modify
-%     it under the terms of the GNU General Public License as published by
-%     the Free Software Foundation, either version 3 of the License, or
-%     (at your option) any later version.
-% 
-%     This program is distributed in the hope that it will be useful,
-%     but WITHOUT ANY WARRANTY; without even the implied warranty of
-%     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%     GNU General Public License for more details.
-% 
-%     You should have received a copy of the GNU General Public License
-%     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-%*****************************************************************************
-% HF demo code
-% 
-%*****************************************************************************
+%******************************************************************
+%  HF demo code using Gaussian basis sets
 %  
+%  Copyright (C) 2014-2015 xiangrufan@GitHub <1034534198@qq.com>
+%  Released in MIT License 
+%  
+%  Revised: Hua Huang <huangh223@gatech.edu>, 10 Dec 2019
+%  
+%******************************************************************
+
 clear all
 Farraytmp=load('Farray.mat');
 Farray=Farraytmp.Fvunum;
 
 
 deletelimit=0;
-[species,xyz] = findgeomgjf('gaussian_testjob\CH3MO.gjf');%　usig reorient in gaussian before using this code, this can accelerate the calculation a lot. 
+[species,xyz] = findgeomgjf('gaussian_testjob\CH3MO.gjf'); % using reorient in gaussian before using this code, this can accelerate the calculation a lot. 
 xyz=xyz*1.889725989;
-[spreads,d,shapematrix,centers,Nelec,Nnuc,nucchg,K,L]=initialization_HF(species,xyz,'STO2G');% The code only support STO2G and 321G basis set
+[spreads,d,shapematrix,centers,Nelec,Nnuc,nucchg,K,L]=initialization_HF(species,xyz,'STO2G'); % The code only support STO2G and 321G basis set
 
 internucEnergy=0;
 for ix =1:Nnuc
@@ -37,61 +25,66 @@ for ix =1:Nnuc
         internucEnergy=internucEnergy+nucchg(ix)*nucchg(iy)/(distance*distance')^0.5;
     end
 end   
-internucEnergy
+fprintf('internucEnergy = %d\n', internucEnergy);
 
 %%
 % Compute all single electron operations
-% 算出hatree-fock方程各个矩阵的值，存起来
-S = zeros(K,K);%S矩阵
-T = zeros(K,K);%T矩阵
-V = zeros(K,K);%V矩阵
-two_elec2_diag=zeros(K,K);
-flag2 = zeros(K,K); %立flag
+S = zeros(K,K);
+T = zeros(K,K);
+V = zeros(K,K);
+ERI_diag = zeros(K,K);
+flag2 = zeros(K,K);
 
 %Calculate the parts of the Fock matrix hamiltonian:
-for mu = 1 : K    % 对每个轨道
-    for nu = 1:K  % 与另一个轨道的一个组成的高斯方程算积分
-        if (flag2(mu, nu) ~= 0), continue; end
+for mu = 1 : K 
+for nu = 1 : K 
+    if (flag2(mu, nu) ~= 0), continue; end
+    
+    for p=1:L(mu)
+    for q=1:L(nu)
+        RA = [centers(mu,1) centers(mu,2) centers(mu,3)];
+        RB = [centers(nu,1) centers(nu,2) centers(nu,3)];
+        alpha = spreads(mu,p);
+        beta = spreads(nu,q);
         
-        for p=1:L(mu)  % 对每个轨道的组成高斯方程
-            for q=1:L(nu)
-                RA = [centers(mu,1) centers(mu,2) centers(mu,3)];
-                RB = [centers(nu,1) centers(nu,2) centers(nu,3)];
-                alpha = spreads(mu,p);
-                beta = spreads(nu,q);
-                
-                S(mu,nu) = S(mu,nu) + d(mu,p)*d(nu,q)*...
-                myoverlap3(alpha,beta,shapematrix(mu,:),shapematrix(nu,:),RA,RB );
-                
-                T(mu,nu) = T(mu,nu) + d( mu,p)*d( nu,q)*...
-                mykinetic(alpha,beta,shapematrix(mu,:),shapematrix(nu,:),RA,RB );
-                
-                for i = 1 : Nnuc
-                    RC = xyz(i,:);
-                    V(mu,nu) = V(mu,nu) + d(mu,p)*d(nu,q)*...
-                    nucchg(i)*mynuc_elec3(alpha,beta,shapematrix(mu,:),shapematrix(nu,:),RA,RB,RC,Farray);
-                end
-            end
-        end
+        S(mu,nu) = S(mu,nu) + d(mu,p)*d(nu,q)*...
+        myoverlap3(alpha,beta,shapematrix(mu,:),shapematrix(nu,:),RA,RB );
         
-        % 删除掉过小的积分
-        if abs(T(mu,nu))<deletelimit
-            T(mu,nu)=0;
-        end
-        if abs(V(mu,nu))<deletelimit
-            V(mu,nu)=0;
-        end
-        if abs(S(mu,nu))<deletelimit
-            S(mu,nu)=0;
-        end
+        T(mu,nu) = T(mu,nu) + d( mu,p)*d( nu,q)*...
+        mykinetic(alpha,beta,shapematrix(mu,:),shapematrix(nu,:),RA,RB );
         
-        %强制对称性
-        S(nu,mu)=S(mu,nu);
-        T(nu,mu)=T(mu,nu);
-        V(nu,mu)=V(mu,nu);
-        flag2(mu,nu)=1;
-        flag2(nu,mu)=1;
+        for i = 1 : Nnuc
+            RC = xyz(i,:);
+            V(mu,nu) = V(mu,nu) + d(mu,p)*d(nu,q)*...
+            nucchg(i)*mynuc_elec3(alpha,beta,shapematrix(mu,:),shapematrix(nu,:),RA,RB,RC,Farray);
+        end
     end
+    end
+    
+    % Screening
+    if abs(T(mu,nu))<deletelimit
+        T(mu,nu)=0;
+    end
+    if abs(V(mu,nu))<deletelimit
+        V(mu,nu)=0;
+    end
+    if abs(S(mu,nu))<deletelimit
+        S(mu,nu)=0;
+    end
+    
+    % Force symmetry
+    S(nu,mu)=S(mu,nu);
+    T(nu,mu)=T(mu,nu);
+    V(nu,mu)=V(mu,nu);
+    flag2(mu,nu)=1;
+    flag2(nu,mu)=1;
+end
+end
+[orbs, Dorbs] = eig(S);
+[orbs, Dorbs] = sorteig(orbs, Dorbs);    
+X = zeros(size(orbs));
+for i = 1 : K
+    X(:, i) = orbs(:, i) / (Dorbs(i, i)^0.5);
 end
 
 %%
@@ -102,36 +95,36 @@ efuncresultx=zeros(6,6,5,K,K);
 efuncresulty=zeros(6,6,5,K,K);
 efuncresultz=zeros(6,6,5,K,K);
 for phi1=1:K
-    for phi2=1:K
-        shape1=squeeze(shapematrix(phi1,:));
-        shape2=squeeze(shapematrix(phi2,:));
-        L1=shape1(1);
-        L2=shape2(1);
-        m1=shape1(2);
-        m2=shape2(2);
-        n1=shape1(3);
-        n2=shape2(3);
-        A=[centers(phi1,1) centers(phi1,2) centers(phi1,3)];
-        B=[centers(phi2,1) centers(phi2,2) centers(phi2,3)];
-        Ax=A(1);
-        Bx=B(1);
-        Ay=A(2);
-        By=B(2);
-        Az=A(3);
-        Bz=B(3);
+for phi2=1:K
+    shape1=squeeze(shapematrix(phi1,:));
+    shape2=squeeze(shapematrix(phi2,:));
+    L1=shape1(1);
+    L2=shape2(1);
+    m1=shape1(2);
+    m2=shape2(2);
+    n1=shape1(3);
+    n2=shape2(3);
+    A=[centers(phi1,1) centers(phi1,2) centers(phi1,3)];
+    B=[centers(phi2,1) centers(phi2,2) centers(phi2,3)];
+    Ax=A(1);
+    Bx=B(1);
+    Ay=A(2);
+    By=B(2);
+    Az=A(3);
+    Bz=B(3);
 
-        alphax1 = repmat(spreads( phi1,1:L(phi1))',[1,L(phi2)]) ;
-        alphax2 = repmat((spreads( phi2,1:L(phi2))),[L(phi1),1]) ;
-        for t1=0:(L1+L2)
-            efuncresultx(1:L(phi1),1:L(phi2),t1+1,phi1,phi2)=Efunc(t1,L1,L2,alphax1,alphax2,Ax,Bx);
-        end
-        for u1=0:(m1+m2)
-            efuncresulty(1:L(phi1),1:L(phi2),u1+1,phi1,phi2)=Efunc(u1,m1,m2,alphax1,alphax2,Ay,By);
-        end    
-        for v1= 0:(n1+n2)
-            efuncresultz(1:L(phi1),1:L(phi2),v1+1,phi1,phi2)=Efunc(v1,n1,n2,alphax1,alphax2,Az,Bz);
-        end
+    alphax1 = repmat(spreads( phi1,1:L(phi1))',[1,L(phi2)]) ;
+    alphax2 = repmat((spreads( phi2,1:L(phi2))),[L(phi1),1]) ;
+    for t1=0:(L1+L2)
+        efuncresultx(1:L(phi1),1:L(phi2),t1+1,phi1,phi2)=Efunc(t1,L1,L2,alphax1,alphax2,Ax,Bx);
     end
+    for u1=0:(m1+m2)
+        efuncresulty(1:L(phi1),1:L(phi2),u1+1,phi1,phi2)=Efunc(u1,m1,m2,alphax1,alphax2,Ay,By);
+    end    
+    for v1= 0:(n1+n2)
+        efuncresultz(1:L(phi1),1:L(phi2),v1+1,phi1,phi2)=Efunc(v1,n1,n2,alphax1,alphax2,Az,Bz);
+    end
+end
 end
 
 for ix =0:4
@@ -142,134 +135,130 @@ for ix =0:4
     end
 end
 
+%% 
+% Rename some variables 
+natom     = Nnuc;         % Total number of atoms
+nocc      = Nelec / 2;    % Total number of occupied orbitals
+atom_xyz  = xyz;          % Atom coordinates
+nbf       = K;            % Total number of basis functions
+bf_coef   = d;            % coef  terms  of basis functions
+bf_alpha  = spreads;      % alpha terms  of basis functions
+bf_exp    = shapematrix;  % Polynomial exponents terms of basis functions
+bf_center = centers;      % Center of basis functions
+bf_nprim  = L;            % Number of primitive functions in each basis function
+Hcore     = T + V;        % Core Hamiltonian
+
 %%
-% Two-electron matrix elements
-% Calculate eq 3.211 w/ primitive Gaussians 3.212:
-%4D矩阵储存四中心，两电子积分
-two_elec2 = zeros(K,K,K,K);
-flag = zeros(K,K,K,K);
-%flag是必须的，判断是否需要从新计算双电子积分
-%遍历每个轨道的每个高斯基函数。因为是积分结果和 四个 高斯基函数 相关，需要遍历四次
-tic
-for mu=1:K
-for nu=1:K
-for lambda=1:K
-for sigma=1:K
-    if (flag(mu,nu,lambda,sigma) == 0)
-        
-        two_elec2(mu,nu,lambda,sigma) = get2elec_tablevE(mu,nu,lambda,sigma,centers,spreads,shapematrix,d,L,Farray,effuncall);
-        if (abs(two_elec2(mu,nu,lambda,sigma)) < 1e-16)
-            two_elec2(mu,nu,lambda,sigma)=0;
-        end
-        
-        two_elec2(nu,mu,lambda,sigma)=two_elec2(mu,nu,lambda,sigma);
-        two_elec2(nu,mu,sigma,lambda)=two_elec2(mu,nu,lambda,sigma);
-        two_elec2(mu,nu,sigma,lambda)=two_elec2(mu,nu,lambda,sigma);
-        two_elec2(sigma,lambda,mu,nu )=two_elec2(mu,nu,lambda,sigma);
-        two_elec2(lambda,sigma,mu,nu )=two_elec2(mu,nu,lambda,sigma);
-        two_elec2(sigma,lambda,nu,mu )=two_elec2(mu,nu,lambda,sigma);
-        two_elec2(lambda,sigma,nu,mu )=two_elec2(mu,nu,lambda,sigma);
-     
-        flag(nu,mu,lambda,sigma)=1;
-        flag(nu,mu,sigma,lambda)=1;
-        flag(mu,nu,sigma,lambda)=1;
-        flag(sigma,lambda,mu,nu)=1;
-        flag(lambda,sigma,mu,nu)=1;
-        flag(sigma,lambda,nu,mu)=1;
-        flag(lambda,sigma,nu,mu)=1;
+% Two-electron repulsive integral
+% Note: in real-world calculation, we cannot store the 4D ERI tensor,
+% shell quartets need to be computed in each SCF iteration repeatly
+ERI  = zeros(K, K, K, K);
+flag = zeros(K, K, K, K);
+tic;
+for i = 1 : nbf
+for j = 1 : nbf
+for k = 1 : nbf
+for l = 1 : nbf
+    % 8-way symmetry property
+    if (flag(i, j, k, l) == 1), continue; end
+
+    % primitive screening
+    if (abs(ERI(i, j, k, l)) < 1e-14)
+        ERI(i, j, k, l) = 0;
     end
+
+    ERI(i, j, k, l) = get2elec_tablevE(i,j,k,l,centers,spreads,shapematrix,d,L,Farray,effuncall);
+    
+    ERI(j, i, k, l) = ERI(i, j, k, l);
+    ERI(j, i, l, k) = ERI(i, j, k, l);
+    ERI(i, j, l, k) = ERI(i, j, k, l);
+    ERI(l, k, i, j) = ERI(i, j, k, l);
+    ERI(k, l, i, j) = ERI(i, j, k, l);
+    ERI(l, k, j, i) = ERI(i, j, k, l);
+    ERI(k, l, j, i) = ERI(i, j, k, l);
+ 
+    flag(j, i, k, l) = 1;
+    flag(j, i, l, k) = 1;
+    flag(i, j, l, k) = 1;
+    flag(l, k, i, j) = 1;
+    flag(k, l, i, j) = 1;
+    flag(l, k, j, i) = 1;
+    flag(k, l, j, i) = 1;
 end
 end
 end   
 end
-toc
-%%
-
-% 插入制造正交性的东西
-[orbs, Dorbs] = eig(S);
-[orbs, Dorbs] = sorteig(orbs, Dorbs);    
-X = zeros(size(orbs));
-Y = X; %预备做密度矩阵
-for i = 1 : K
-    X(:, i) = orbs(:, i) / (Dorbs(i, i)^0.5);
-    Y(:, i) = orbs(:, i) / (Dorbs(i, i));
-end
+ut = toc;
+fprintf('ERI tensor calculation = %.3f (s)\n', ut);
 
 %% 
 % SCF iteration
 
-clear Pold
-it = 0;
-deltaE = 1; 
-H = T + V; 
-[int_points, int_weights] = generate_integrate_weights_points(xyz);
-   
-while it < 100
-    tic;
-    it = it + 1;
-    
-    if (it == 1)
-        % 密度矩阵初猜，用不含电子间排斥力的F矩阵算出c
-        Hprime = X' * H * X;
-        [cprime, D] = eig(Hprime);
-        [cprime, D] = sorteig(cprime, D);
-        c = X * cprime;  
-    end
-    
-    P = zeros(K, K); 
-    for i = 1 : Nelec/2
-        P = P + 2 * (c(:,i) * c(:,i)');
-    end
-    
-    % 密度方程混合 density matrix mixing
-    Pnew = P;
-    if (it > 1)
-        mixratio = 0.7;
-        P = Pold * mixratio + Pnew * (1 - mixratio);
-    end
-    if (it > 10)
-        mixratio = 0.5;
-        P = Pold * mixratio + Pnew * (1 - mixratio);
-    end
+% Initial guess for density matrix: use core Hamiltonian
+Hprime = X' * Hcore * X;
+[Cprime, diag] = eig(Hprime);
+[Cprime, diag] = sorteig(Cprime, diag);
+C = X * Cprime;
+C = C(:, 1 : nocc);
+D = 2 * C * C';
 
-    %  Calculate the G(mu,nu) part of the Fock matrix, (eq 3.154)
-    G = zeros(K, K);
-    for mu = 1 : K
-        for nu = 1 : K
-            for lambda = 1 : K
-                for sigma = 1 : K
-                    G(mu, nu) = G(mu, nu) + P(lambda, sigma) * (two_elec2(mu, nu, sigma, lambda) - 0.5 * two_elec2(mu, sigma, nu, lambda));         
-                    if (abs(G(mu, nu)) < deletelimit)
-                        G(mu,nu) = 0;
-                    end
-                end
-            end
+% SCF iteration
+iter   = 0;
+deltaE = 1; 
+while (iter < 100)
+    tic;
+    iter = iter + 1;
+    
+    % Constrct the Coulomb matrix and exchange matrix
+    J = zeros(nbf, nbf);
+    K = zeros(nbf, nbf);
+    for i = 1 : nbf
+    for j = 1 : nbf
+        for k = 1 : nbf
+        for l = 1 : nbf
+            J(i, j) = J(i, j) + D(k, l) * ERI(i, j, l, k);
+            K(i, j) = K(i, j) + D(k, l) * ERI(i, k, j, l);
+        end
         end
     end
+    end
     
-    F = G + H;          
+    % Constrct the complete Fock matrix
+    H = J - 0.5 * K;
+    F = Hcore + H;
     Fprime = X' * F * X;
     
-    % 算总能量
-    [cprime, D] = eig(Fprime);
-    [cprime, D] = sorteig(cprime, D);
-    c = X * cprime;  
+    % Construct density matrix using eigendecomposition
+    [Cprime, diag] = eig(Fprime);
+    [Cprime, diag] = sorteig(Cprime, diag);
+    C = X * Cprime;
+    C = C(:, 1 : nocc);
+    D = 2 * C * C';
     
-    energy = 0.5 * sum(sum(P .* G)) + sum(sum(P .* H));
-    Enonuc = energy;
-    energy = energy + internucEnergy;  % 原子核间斥力 
+    % Density matrix mixing
+    Dnew = D;
+    if (iter > 1)
+        mix_ratio = 0.7;
+        D = Dold * mix_ratio + Dnew * (1 - mix_ratio);
+    end
+    if (iter > 10)
+        mix_ratio = 0.5;
+        D = Dold * mix_ratio + Dnew * (1 - mix_ratio);
+    end
+    Dold = D;
     
-    if (it > 2)
+    % Calculate new energy
+    energy = 0.5 * sum(sum(D .* H)) + sum(sum(D .* Hcore));
+    energy = energy + internucEnergy;
+    if (iter > 2)
         deltaE = energyold - energy;
     end
     if (abs(deltaE) < 1e-11)
         break
     end
-    ut = toc;
-    fprintf('Iter %2d, energy = %d, deltaE = %e, %.3f (s)\n', it, energy, deltaE, ut);
-    
     energyold = energy;
-    Pold = P;
+    ut = toc;
+    fprintf('Iter %2d, energy = %d, deltaE = %e, %.3f (s)\n', iter, energy, deltaE, ut);
 end
 
  
