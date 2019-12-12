@@ -192,14 +192,14 @@ ut = toc;
 fprintf('ERI tensor calculation = %.3f (s)\n', ut);
 
 %% 
-% Precompute variables used for calculating XC
-% Note: in real-world calculation, we cannot store the 4D rhos tensor,
-% rhos need to be computed in each SCF iteration repeatly
+% Precompute the values of basis functions at XC integral points
+% Note: in real-world calculation, we cannot store the 3D rho tensor
+% for large molecules, rho need to be computed in each SCF iteration repeatly
 tic;
 [int_points, int_weights] = generate_integrate_weights_points(atom_xyz);
-rhos = precomp_Xalpha_at_int_points(int_points, atom_xyz, nbf, bf_coef, bf_alpha, bf_exp, bf_center, bf_nprim);
+rho = calc_bf_value_at_int_points(int_points, atom_xyz, nbf, bf_coef, bf_alpha, bf_exp, bf_center, bf_nprim);
 ut = toc;
-fprintf('Precompute Xalpha & numerical integral points = %.3f (s)\n', ut);
+fprintf('Precompute bf values at integral points = %.3f (s)\n', ut);
 
 %% 
 % SCF iteration
@@ -232,7 +232,7 @@ while (iter < 100)
     end
     
     % Constrct the exchang-correlation matrix
-    XC = eval_XC_with_Xalpha_rhos(natom, nbf, rhos, int_weights, D);
+    XC = eval_Xalpha_XC_with_rho(natom, nbf, rho, int_weights, D);
     
     % Constrct the complete Fock matrix
     H = 2 * J + XC;
