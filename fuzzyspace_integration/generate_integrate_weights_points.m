@@ -6,7 +6,7 @@ function [int_points, int_weights] = generate_integrate_weights_points(atom_xyz)
     [ncenters, ~] = size(atom_xyz);
     
     % 原作者设的参数值
-    P        = 5;    % 原作者设的 P 值，不知为何是 5
+    rm       = 1;    % 原作者设成了5，这里与 multifwn 看齐用1
     nCheby   = 75;   % 径向使用 75 个节点
     nLebedev = 302;  % 球面使用 302 个 Lebedev 节点    
 
@@ -14,7 +14,7 @@ function [int_points, int_weights] = generate_integrate_weights_points(atom_xyz)
     Lebedev_points = getLebedevSphere(nLebedev);
     
     % 生成径向与球面积分节点
-    [rad_r, rad_w] = my_cheb2_becke(nCheby, P);
+    [rad_r, rad_w] = my_cheb2_becke(nCheby, rm);
     
     % 将径向节点与球面节点进行组合
     rad_cut_num  = sum(rad_r < 10);
@@ -57,7 +57,7 @@ function [int_points, int_weights] = generate_integrate_weights_points(atom_xyz)
                     smu = 1.5 * smu - 0.5 * smu.^3;
                     smu = 1.5 * smu - 0.5 * smu.^3;
 
-                    W_mat(:, jatom, katom) = (0.5 * (1 - smu)); %储存遮蔽矩阵jk
+                    W_mat(:, jatom, katom) = (0.5 * (1 - smu));
                 else
                     W_mat(:, jatom, katom) = 1;
                 end
@@ -65,7 +65,7 @@ function [int_points, int_weights] = generate_integrate_weights_points(atom_xyz)
         end
 
         % 对每个积分格点 i，遮蔽矩阵 W_mat(i, j, :) 的乘积即为格点 i 属于原子 j 的权重
-        pvec = ones(radius_cut_num * nLebedev, ncenters);
+        pvec = ones(rad_cut_num * nLebedev, ncenters);
         for iw = 1 : ncenters  
             for iz = 1 : ncenters     
                 pvec(:, iw) = pvec(:, iw) .* W_mat(:, iw, iz);
@@ -73,7 +73,7 @@ function [int_points, int_weights] = generate_integrate_weights_points(atom_xyz)
         end
 
         % 对 pvec 求和以归一化
-        sum_pvec = zeros(radius_cut_num * nLebedev, 1);
+        sum_pvec = zeros(rad_cut_num * nLebedev, 1);
         for ix = 1 : ncenters
             sum_pvec = pvec(:, ix) + sum_pvec;
         end
