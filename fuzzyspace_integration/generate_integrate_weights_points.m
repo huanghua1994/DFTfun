@@ -69,10 +69,6 @@ function [int_points, int_weights] = generate_integrate_weights_points(atom_xyz)
            end
         end
         
-        % \prod_{j} W_mat(:, j, :) 
-        % are the fuzzy belonging of grid i to atom j
-        % 对每个积分格点 i，W_mat(i, j, :) 的乘积即为格点 i 属于原子 j 的权重
-        
         % \prod_{k} W_mat(:, j, k) is the actual weight of integral points
         % belonging to atom k. Normalizing it gives us the fuzzy weight. 
         % 积分节点上第 j 个原子的实际权重等于在此处原子 j 与所有其他原子

@@ -37,7 +37,6 @@ function rho = calc_bf_value_at_int_points(int_points, atom_xyz, nbf, bf_coef, b
                 alpha = bf_alpha(i, p);
                 rho_i_k = rho_i_k + (bf_coef(i,p) .* poly) .* exp(-alpha*dx2) .* exp(-alpha*dy2) .* exp(-alpha*dz2);
             end
-            
             rho(:, i, k) = rho_i_k;
         end
     end

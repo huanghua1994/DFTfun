@@ -1,15 +1,15 @@
-function [rad_r, rad_w] = my_cheb2_becke(nCheby, rm)
+function [rad_r, rad_w] = my_cheb2_becke(n, rm)
 % Ref: [JCP 88, 2547], doi: 10.1063/1.454033
 % Input parameters:
-%   nCheby : Number of points on the radial direction
-%   rm     : A parameter mentioned in Ref.
+%   n  : Number of points on the radial direction
+%   rm : A parameter mentioned in Ref.
 % Output parameters:
-%   rad_r : Size nCheby-1, radial direction integral points
-%   rad_w : Size nCheby-1, radial direction integral point weights
+%   rad_r : Size n-1, radial direction integral points
+%   rad_w : Size n-1, radial direction integral point weights
 
-    rad_r = zeros(nCheby, 1);
-    rad_w = zeros(nCheby, 1);
-    m = nCheby - 1;
+    rad_r = zeros(n, 1);
+    rad_w = zeros(n, 1);
+    m = n - 1;
     for i = 0 : m
         radx = cos(i * pi / m);
         radr = rm * (1 + radx) / (1 - radx);
@@ -19,7 +19,6 @@ function [rad_r, rad_w] = my_cheb2_becke(nCheby, rm)
         rad_r(i+1) = radr;
         rad_w(i+1) = radw;
     end
-    
     % rad_w(1) = inf, discard it
     rad_r = rad_r(end : -1 : 2);
     rad_w = rad_w(end : -1 : 2);

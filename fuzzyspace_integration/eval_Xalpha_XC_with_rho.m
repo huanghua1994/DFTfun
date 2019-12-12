@@ -24,11 +24,11 @@ function XC = eval_Xalpha_XC_with_rho(natom, nbf, rho, ipw, D)
         rho_s0 = (2 .* rho_s0).^(1/3);
         
         for i = 1 : nbf
-        for j = i : nbf
-            rho_kij  = rho(:, i, k) .* rho(:, j, k) .* rho_s0;
-            XC(i, j) = XC(i, j) + dot(rho_kij, ipw(:, k));
-            XC(j, i) = XC(i, j);
-        end
+            for j = i : nbf
+                rho_kij  = rho(:, i, k) .* rho(:, j, k) .* rho_s0;
+                XC(i, j) = XC(i, j) + dot(rho_kij, ipw(:, k));
+                XC(j, i) = XC(i, j);
+            end
         end
     end
     XC = (-9/8) * ((3/pi)^(1/3)) * 0.7 * XC; 
