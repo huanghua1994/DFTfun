@@ -21,7 +21,7 @@ function XC = eval_Xalpha_XC_with_rho(natom, nbf, rho, ipw, D)
             end
             rho_s0 = rho_s0 + rho(:, i, k) .* rho_s1;
         end
-        rho_s0 = (2 .* rho_s0).^(1/3);
+        rho_s0 = rho_s0.^(1/3);
         
         for i = 1 : nbf
             for j = i : nbf
@@ -31,5 +31,8 @@ function XC = eval_Xalpha_XC_with_rho(natom, nbf, rho, ipw, D)
             end
         end
     end
-    XC = (-9/8) * ((3/pi)^(1/3)) * 0.7 * XC; 
+    
+    % Xalpha: v[rho] = -alpha * 3/2 * (3/pi)^{1/3} rho^{1/3}, we use 
+    % alpha = 0.7 here (Ref: doi: 10.1016/0301-0104(73)80059-X)
+    XC = -0.7 * (3/2) * ((3/pi)^(1/3)) * XC; 
 end

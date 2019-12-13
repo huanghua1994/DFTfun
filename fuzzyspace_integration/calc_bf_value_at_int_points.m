@@ -31,11 +31,11 @@ function rho = calc_bf_value_at_int_points(int_points, atom_xyz, nbf, bf_coef, b
             dx2  = (ipx-bfx).^2;
             dy2  = (ipy-bfy).^2;
             dz2  = (ipz-bfz).^2;
+            d2   = dx2 + dy2 + dz2;
             
             rho_i_k = zeros(nintp, 1);
             for p = 1 : bf_nprim(i)
-                alpha = bf_alpha(i, p);
-                rho_i_k = rho_i_k + (bf_coef(i,p) .* poly) .* exp(-alpha*dx2) .* exp(-alpha*dy2) .* exp(-alpha*dz2);
+                rho_i_k = rho_i_k + (bf_coef(i, p) .* poly) .* exp(-bf_alpha(i, p) * d2);
             end
             rho(:, i, k) = rho_i_k;
         end

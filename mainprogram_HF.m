@@ -35,7 +35,7 @@ V = zeros(K,K);
 ERI_diag = zeros(K,K);
 flag2 = zeros(K,K);
 
-%Calculate the parts of the Fock matrix hamiltonian:
+%Calculate the parts of the Fock matrix Hamiltonian:
 for mu = 1 : K 
 for nu = 1 : K 
     if (flag2(mu, nu) ~= 0), continue; end
@@ -151,7 +151,7 @@ Hcore     = T + V;        % Core Hamiltonian
 %%
 % Two-electron repulsive integral
 % Note: in real-world calculation, we cannot store the 4D ERI tensor,
-% shell quartets need to be computed in each SCF iteration repeatly
+% shell quartets need to be computed in each SCF iteration
 ERI  = zeros(K, K, K, K);
 flag = zeros(K, K, K, K);
 tic;
@@ -209,7 +209,7 @@ while (iter < 100)
     tic;
     iter = iter + 1;
     
-    % Constrct the Coulomb matrix and exchange matrix
+    % Construct the Coulomb matrix and exchange matrix
     J = zeros(nbf, nbf);
     K = zeros(nbf, nbf);
     for i = 1 : nbf
@@ -223,12 +223,12 @@ while (iter < 100)
     end
     end
     
-    % Constrct the complete Fock matrix
+    % Construct the complete Fock matrix
     H = 2 * J - K;
     F = Hcore + H;
     Fprime = X' * F * X;
     
-    % Construct density matrix using eigendecomposition
+    % Construct density matrix using eigen decomposition
     [Cprime, diag] = eig(Fprime);
     [Cprime, diag] = sorteig(Cprime, diag);
     C = X * Cprime;
