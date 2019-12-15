@@ -196,8 +196,8 @@ fprintf('ERI tensor calculation = %.3f (s)\n', ut);
 % Note: in real-world calculation, we cannot store the 3D phi tensor
 % for large molecules, phi need to be computed in each SCF iteration
 tic;
-[ip, ipw] = generate_integrate_weights_points(atom_xyz);
-phi = calc_bf_value_at_int_points(ip, nbf, bf_coef, bf_alpha, bf_exp, bf_center, bf_nprim);
+[ip, ipw] = generate_int_point_weight(atom_xyz, nucchg);
+phi = eval_bf_at_int_point(ip, nbf, bf_coef, bf_alpha, bf_exp, bf_center, bf_nprim);
 ut = toc;
 fprintf('Precompute bf values at integral points = %.3f (s)\n', ut);
 

@@ -1,4 +1,4 @@
-function rho = calc_bf_value_at_int_points(ip, nbf, bf_coef, bf_alpha, bf_exp, bf_center, bf_nprim)
+function rho = eval_bf_at_int_point(ip, nbf, bf_coef, bf_alpha, bf_exp, bf_center, bf_nprim)
 % Evaluate the values of basis function at integral points
 % Input parameters:
 %   ip         : Integral point coordinates
