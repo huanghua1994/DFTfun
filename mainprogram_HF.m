@@ -14,7 +14,7 @@ Farray=Farraytmp.Fvunum;
 
 
 deletelimit=0;
-[species,xyz] = findgeomgjf('gaussian_testjob\CH3MO.gjf'); % using reorient in gaussian before using this code, this can accelerate the calculation a lot. 
+[species,xyz] = findgeomgjf('gaussian_testjob\CH4.gjf'); % using reorient in gaussian before using this code, this can accelerate the calculation a lot. 
 xyz=xyz*1.889725989;
 [spreads,d,shapematrix,centers,Nelec,Nnuc,nucchg,K,L]=initialization_HF(species,xyz,'STO2G'); % The code only support STO2G and 321G basis set
 

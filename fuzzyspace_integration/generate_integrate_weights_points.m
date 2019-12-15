@@ -1,17 +1,19 @@
-function [int_points, int_weights] = generate_integrate_weights_points(atom_xyz)
+function [ip, ipw] = generate_integrate_weights_points(atom_xyz)
 % Get numerical integral points and their fuzzy weights for XC integral
 % Ref: [JCP 88, 2547], doi: 10.1063/1.454033, and http://sobereva.com/69
 % Input parameter:
 %   atom_xyz : Atom coordinates
 % Output parameters:
-%   int_points  : Numerical integral points (the same for all atoms)
-%   int_weights : Fuzzy weights of numerical integral points 
-%                 (different for different atoms)
+%   ip  : Numerical integral points of all atoms
+%   ipw : Fuzzy weights of numerical integral points
 
     % The values of nCheby and nLebedev are chosen by the original author
     rm       = 1;    % A parameter, see my_cheb2_becke
     nCheby   = 75;   % Number of radial direction integral points + 1
     nLebedev = 302;  % Number of points on a sphere
+
+    % TODO: prune grid points for different atoms, so the number of integral points
+    % per atom could be different and the total number of grid points can be reduced
 
     % Generate Lebedev points on a sphere
     Lebedev_points = getLebedevSphere(nLebedev);
@@ -20,29 +22,30 @@ function [int_points, int_weights] = generate_integrate_weights_points(atom_xyz)
     [rad_r, rad_w] = my_cheb2_becke(nCheby, rm);
     
     % Combine radial direction points with sphere points
-    rad_cut_num  = sum(rad_r < 10);
-    int_weights0 = zeros(rad_cut_num * nLebedev, 1);
-    int_points   = zeros(rad_cut_num * nLebedev, 3);
-    orig_points  = [Lebedev_points.x, Lebedev_points.y, Lebedev_points.z];
-    for ir = 1 : rad_cut_num
-        spos = ir * nLebedev - nLebedev + 1;
+    n_radcut = sum(rad_r < 10);
+    ip_atom  = zeros(n_radcut * nLebedev, 3);
+    ipw_atom = zeros(n_radcut * nLebedev, 1);
+    orig_ip  = [Lebedev_points.x, Lebedev_points.y, Lebedev_points.z];
+    for ir = 1 : n_radcut
+        spos = (ir-1) * nLebedev + 1;
         epos = ir * nLebedev;
-        int_weights0(spos : epos) = Lebedev_points.w * rad_w(ir);
-        int_points(spos : epos, 1 : 3) = orig_points * rad_r(ir);
+        ip_atom(spos : epos, 1 : 3) = orig_ip * rad_r(ir);
+        ipw_atom(spos : epos) = Lebedev_points.w * rad_w(ir);
     end
-    nintp = rad_cut_num * nLebedev;  % Total number of integral points
+    nintp_atom = n_radcut * nLebedev;  % Total number of integral points
+    natom = size(atom_xyz, 1);
+    ip    = zeros(nintp_atom * natom, 3);
+    ipw   = zeros(nintp_atom * natom, 1);
     
     % W_mat(i, j, k): fuzzy weight of integral point i to atom pair (j, k)
     % W_mat(i, j, k): 第 i 个积分节点关于原子对 (j, k) 的模糊划分权重
-    natom = size(atom_xyz, 1);
-    W_mat = zeros(nintp, natom, natom);
+    W_mat = zeros(nintp_atom, natom, natom);
     dist  = squareform(pdist(atom_xyz));
-    int_weights = zeros(nintp, natom);
     for iatom = 1 : natom
         % Shift the integral point to atom
-        rnowx = int_points(:, 1) + atom_xyz(iatom, 1); 
-        rnowy = int_points(:, 2) + atom_xyz(iatom, 2); 
-        rnowz = int_points(:, 3) + atom_xyz(iatom, 3); 
+        rnowx = ip_atom(:, 1) + atom_xyz(iatom, 1); 
+        rnowy = ip_atom(:, 2) + atom_xyz(iatom, 2); 
+        rnowz = ip_atom(:, 3) + atom_xyz(iatom, 3); 
         
         % Enumerate each atom pair (j, k)
         for jatom = 1 : natom 
@@ -74,13 +77,20 @@ function [int_points, int_weights] = generate_integrate_weights_points(atom_xyz)
         % 积分节点上第 j 个原子的实际权重等于在此处原子 j 与所有其他原子
         % k 之前权重的乘积。归一化后得到以当前原子中心的积分格点属于当前
         % 原子的模糊划分权重。
-        pvec = ones(nintp, natom);
+        pvec = ones(nintp_atom, natom);
         for i = 1 : natom  
             for j = 1 : natom     
                 pvec(:, i) = pvec(:, i) .* W_mat(:, i, j);
             end  
         end
         sum_pvec = sum(pvec, 2);
-        int_weights(:, iatom) = int_weights0 .* pvec(:, iatom) ./ sum_pvec;
+        
+        sidx = (iatom-1) * nintp_atom + 1;
+        eidx = iatom * nintp_atom;
+        ip(sidx : eidx, 1) = rnowx;
+        ip(sidx : eidx, 2) = rnowy;
+        ip(sidx : eidx, 3) = rnowz;
+        ipw(sidx : eidx) = ipw_atom .* pvec(:, iatom) ./ sum_pvec;
+        
     end  % end of iatom loop
 end  % end function    

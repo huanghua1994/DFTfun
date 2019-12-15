@@ -14,7 +14,7 @@ Farray=Farraytmp.Fvunum;
 
 
 deletelimit=0;
-[species,xyz] = findgeomgjf('gaussian_testjob\CH3MO.gjf'); % using reorient in gaussian before using this code, this can accelerate the calculation a lot. 
+[species,xyz] = findgeomgjf('gaussian_testjob\CH4.gjf'); % using reorient in gaussian before using this code, this can accelerate the calculation a lot. 
 xyz=xyz*1.889725989;
 [spreads,d,shapematrix,centers,Nelec,Nnuc,nucchg,K,L]=initialization_HF(species,xyz,'STO2G'); % The code only support STO2G and 321G basis set
 
@@ -193,11 +193,11 @@ fprintf('ERI tensor calculation = %.3f (s)\n', ut);
 
 %% 
 % Precompute the values of basis functions at XC integral points
-% Note: in real-world calculation, we cannot store the 3D rho tensor
-% for large molecules, rho need to be computed in each SCF iteration
+% Note: in real-world calculation, we cannot store the 3D phi tensor
+% for large molecules, phi need to be computed in each SCF iteration
 tic;
-[int_points, int_weights] = generate_integrate_weights_points(atom_xyz);
-rho = calc_bf_value_at_int_points(int_points, atom_xyz, nbf, bf_coef, bf_alpha, bf_exp, bf_center, bf_nprim);
+[ip, ipw] = generate_integrate_weights_points(atom_xyz);
+phi = calc_bf_value_at_int_points(ip, nbf, bf_coef, bf_alpha, bf_exp, bf_center, bf_nprim);
 ut = toc;
 fprintf('Precompute bf values at integral points = %.3f (s)\n', ut);
 
@@ -232,7 +232,7 @@ while (iter < 100)
     end
     
     % Construct the exchange-correlation matrix
-    XC = eval_Xalpha_XC_with_rho(natom, nbf, rho, int_weights, D);
+    XC = eval_Xalpha_XC_with_phi(natom, nbf, phi, ipw, D);
     
     % Construct the complete Fock matrix
     H = 2 * J + XC;

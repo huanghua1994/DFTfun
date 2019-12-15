@@ -1,4 +1,4 @@
-%chk=C:\Users\Administrator\Desktop\MatlabCode\Project_DFT_fun\DFT_fun_v1.2\gaussian_testjob\CH3MO.chk
+%chk=CH4.chk
 #p geom=connectivity output=wfn sto-2g xalpha
 
 Title Card Required
