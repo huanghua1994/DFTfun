@@ -1,4 +1,4 @@
-%chk=C:\Users\Administrator\Desktop\MatlabCode\DFT_fun_v1.0\gaussian_testjob\BENZENE.chk
+%chk=benzene.chk
 #p geom=connectivity output=wfn sto-2g xalpha
 
 Title Card Required

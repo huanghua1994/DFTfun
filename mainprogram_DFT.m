@@ -14,7 +14,7 @@ Farray=Farraytmp.Fvunum;
 
 
 deletelimit=0;
-[species,xyz] = findgeomgjf('gaussian_testjob\CH4.gjf'); % using reorient in gaussian before using this code, this can accelerate the calculation a lot. 
+[species,xyz] = findgeomgjf('gaussian_testjob\CH4-DFT-STO2G.gjf'); % using reorient in gaussian before using this code, this can accelerate the calculation a lot. 
 xyz=xyz*1.889725989;
 [spreads,d,shapematrix,centers,Nelec,Nnuc,nucchg,K,L]=initialization_HF(species,xyz,'STO2G'); % The code only support STO2G and 321G basis set
 
@@ -232,11 +232,11 @@ while (iter < 100)
     end
     
     % Construct the exchange-correlation matrix
-    XC = eval_Xalpha_XC_with_phi(natom, nbf, phi, ipw, D);
+    [XC, Exc] = eval_Xalpha_XC_with_phi(natom, nbf, phi, ipw, D);
     
     % Construct the complete Fock matrix
-    H = 2 * J + XC;
-    F = Hcore + H;
+    H = Hcore + 2 * J;
+    F = H + XC;
     Fprime = X' * F * X;
     
     % Construct density matrix using eigen decomposition
@@ -259,8 +259,7 @@ while (iter < 100)
     Dold = D;
     
     % Calculate new energy
-    energy = sum(sum(D .* (F + XC + Hcore)));
-    energy = energy + internucEnergy;
+    energy = sum(sum(D .* (Hcore + H))) + Exc + internucEnergy;
     if (iter > 2)
         deltaE = energyold - energy;
     end
@@ -271,5 +270,3 @@ while (iter < 100)
     ut = toc;
     fprintf('Iter %2d, energy = %d, deltaE = %e, %.3f (s)\n', iter, energy, deltaE, ut);
 end
-
- 
